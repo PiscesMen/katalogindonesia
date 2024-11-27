@@ -122,4 +122,40 @@ class Barang extends Model
         $builder->limit($limit);
         return $builder->get()->getResultArray();
     }
+    public function getBarangByWilayah($provinsiId = null, $kabupatenId = null, $kecamatanId = null, $kelurahanId = null)
+    {
+        $builder = $this->db->table($this->table);
+        $builder->select('barang.*, alamat_toko.id AS id_alamat, alamat_toko.provinsi, alamat_toko.kabupaten, alamat_toko.kecamatan, alamat_toko.kelurahan');
+        $builder->join('alamat_toko', 'barang.pemilik = alamat_toko.user');
+        $builder->where('barang.verifikasi', 3); // Filter hanya untuk barang yang terverifikasi
+
+        // Filter wilayah
+        if ($kelurahanId) {
+            $builder->where('alamat_toko.kelurahan', $kelurahanId);
+        } elseif ($kecamatanId) {
+            $builder->where('alamat_toko.kecamatan', $kecamatanId);
+        } elseif ($kabupatenId) {
+            $builder->where('alamat_toko.kabupaten', $kabupatenId);
+        } elseif ($provinsiId) {
+            $builder->where('alamat_toko.provinsi', $provinsiId);
+        }
+
+        $builder->orderBy('barang.judul_barang', 'ASC'); // Mengurutkan berdasarkan judul barang secara alfabet
+        return $builder->get()->getResultArray();
+    }
+
+    public function searchProductsByTitle($title = '')
+    {
+        $builder = $this->table($this->table)
+            ->select('barang.*, kategori.nama_kategori')
+            ->join('kategori', 'barang.id_kategori_barang = kategori.id');
+
+        // Jika ada judul barang, tambahkan kondisi LIKE
+        if (!empty($title)) {
+            $builder->like('judul_barang', $title); // Pencarian berdasarkan judul_barang
+        }
+
+        return $builder->get()->getResultArray(); // Mengambil hasil pencarian sebagai array
+    }
+
 }
